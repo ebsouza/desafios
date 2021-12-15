@@ -5,7 +5,7 @@ import argparse
 from formatter import StringFormatter, FileFormatter
 
 
-parser = argparse.ArgumentParser(description='Process some integers.')
+parser = argparse.ArgumentParser(description='Format text inputs.')
 parser.add_argument('--text', dest='text', default=None, type=str,
                     help='input text')
 parser.add_argument('--limit', dest='limit', default=40, type=int,
