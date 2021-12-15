@@ -14,3 +14,8 @@ python3 main.py --text <text:str> --limit <max character per line:int> --justify
 ```
 python3 main.py --file_path <path to file:str> --limit <max character per line:int> --justify <justify text:boolean> 
 ```
+
+### Tests
+```
+python3 tests.py
+```
