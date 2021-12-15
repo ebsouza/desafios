@@ -1,21 +1,23 @@
+# -*- coding: utf-8 -*-
+
 import textwrap
 
 
-def print_threads(threads_list, keys=list(), shorten_text=100):
+def thread_info_to_dict(thread_info, nth=1, keys=list(), shorten_text=100):
+    if not isinstance(thread_info, dict):
+        return None
+
     if not (keys and isinstance(keys, list)):
         return None
 
-    counter = 0
-    print("-------------")
-    for thread in threads_list:
-        counter += 1
-        print(f"{counter}).")
-        for key in keys:
-            content = thread[key]
-            if isinstance(content, str):
-                content = textwrap.shorten(content, width=shorten_text)
-            print(f"{key.upper()} : {content}")
-    print("------------")
+    thread_string = f"{nth}).\n"
+    for key in keys:
+        content = thread_info[key]
+        if isinstance(content, str):
+            content = textwrap.shorten(content, width=shorten_text)
+        thread_string += f"{key.upper()} : {content}\n"
+
+    return thread_string
 
 
 def concatenate_link(base_url, sub_link):

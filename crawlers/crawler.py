@@ -15,7 +15,7 @@ class IdWallRedditCrawler:
         self.url = f"{self.base_url}r/{subthread}/"
         self.vote_threshold = vote_threshold
 
-    def run(self):
+    def run(self, page_limit=1000):
         page_generator = self.next_page_generator()
         url = next(page_generator)
         response = self.request(url)
@@ -33,16 +33,17 @@ class IdWallRedditCrawler:
             for element in all_elements.contents:
                 try:
                     info = self.__extract_info(element)
-                    #print(info) # debug
                     self.__update_subthread_list(info)
                 except TypeError as e:
-                    #print(e)  # debug
                     pass
 
             else:
                 next_url = next(page_generator)
                 next_url += f"&after={info['id']}"
                 response = self.request(next_url)
+
+            if count_pages >= page_limit:
+                break
 
     def sorted_threads_info(self):
         from operator import itemgetter
@@ -92,9 +93,11 @@ class IdWallRedditCrawler:
         thread = html_element.find("div", {"class": "entry unvoted"})
         title = thread.find("a", {"data-event-action": "title"}).text
         link = thread.find("a", {"data-event-action": "title"}).get('href')
-        link = f"{self.base_url[:-1]}{link}"
         link = concatenate_link(self.base_url, link)
-        comments = "" #thread.find("a", {"data-event-action": "comments"}).get('href')
+        try:
+            comments = thread.find("a", {"data-event-action": "comments"}).get('href')
+        except AttributeError as e:
+            comments = "<<No comments>>"
 
         return title, link, comments
 
