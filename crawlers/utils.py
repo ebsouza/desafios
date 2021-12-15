@@ -3,7 +3,7 @@
 import textwrap
 
 
-def thread_info_to_dict(thread_info, nth=1, keys=list(), shorten_text=100):
+def thread_info_to_string(thread_info, nth=1, keys=list(), shorten_text=100):
     if not isinstance(thread_info, dict):
         return None
 
@@ -18,9 +18,3 @@ def thread_info_to_dict(thread_info, nth=1, keys=list(), shorten_text=100):
         thread_string += f"{key.upper()} : {content}\n"
 
     return thread_string
-
-
-def concatenate_link(base_url, sub_link):
-    if sub_link.find("https://") != -1:
-        return sub_link
-    return f"{base_url[:-1]}{sub_link}"

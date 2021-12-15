@@ -3,44 +3,107 @@
 import requests
 from bs4 import BeautifulSoup
 
-from utils import concatenate_link
+from config import browser_info, no_data_message_str, no_data_message_int
+
+
+class IdWallRedditExtractor:
+    def __init__(self, base_url, html):
+        self.base_url = base_url
+        self.html = html
+
+    def extract_thread_info(self):
+        parent_element = self.__extract_parent_element()
+        thread_info_list = list()
+
+        if not parent_element:
+            return thread_info_list
+
+        for child_element in parent_element:
+            info = dict()
+
+            info['id'] = child_element.get('data-fullname')
+            if not info['id']:
+                continue
+
+            info['title'] = self.__extract_title(child_element)
+            info['likes'] = self.__extract_likes(child_element)
+            info['link'] = self.__extract_link(child_element)
+            info['comments'] = self.__extract_comments(child_element)
+
+            thread_info_list.append(info)
+
+        return thread_info_list
+
+    def __extract_parent_element(self):
+        soup = BeautifulSoup(self.html, 'html.parser')
+        parent_element = soup.find("div", {"id": "siteTable"})
+
+        if not parent_element or len(parent_element) == 1:
+            return None
+
+        return parent_element
+
+    def __extract_title(self, html_element):
+        thread = html_element.find("div", {"class": "entry unvoted"})
+        return thread.find("a", {"data-event-action": "title"}).text
+
+    def __extract_likes(self, html_element):
+        html_element = html_element.find("div", {"class": "midcol unvoted"})
+        likes = html_element.find("div", {"class": "score unvoted"}).get('title')
+        try:
+            return int(likes)
+        except TypeError:
+            return no_data_message_int
+
+    def __extract_link(self, html_element):
+        thread = html_element.find("div", {"class": "entry unvoted"})
+        try:
+            link = thread.find("a", {"data-event-action": "title"}).get('href')
+            if link.find("https://") != -1:
+                return link
+            return f"{self.base_url[:-1]}{link}"
+        except AttributeError:
+            return no_data_message_str
+
+    def __extract_comments(self, html_element):
+        thread = html_element.find("div", {"class": "entry unvoted"})
+        try:
+            return thread.find("a", {"data-event-action": "comments"}).get('href')
+        except AttributeError:
+            return no_data_message_str
 
 
 class IdWallRedditCrawler:
 
     base_url = 'https://old.reddit.com/'
 
-    def __init__(self, subreddit, vote_threshold=0):
+    def __init__(self, subreddit, likes_threshold=0):
         self.threads = list()
         self.url = f"{self.base_url}r/{subreddit}/"
-        self.vote_threshold = vote_threshold
+        self.likes_threshold = likes_threshold
 
     def run(self, page_limit=1000):
-        page_generator = self.next_page_generator()
-        url = next(page_generator)
-        response = self.request(url)
+        page_generator = self.__next_page_generator()
+        next_url = next(page_generator)
+        response = requests.get(next_url, headers={"User-Agent": browser_info})
 
         count_pages = 0
 
         while response.status_code == 200:
-            all_elements = self.__extract_parent_element(response.content)
-            if not all_elements:
+
+            extractor = IdWallRedditExtractor(self.base_url, response.content)
+            count_pages += 1
+
+            print(f"Scraping page : {count_pages} | url : {next_url}")
+
+            thread_info_list = extractor.extract_thread_info()
+            if thread_info_list:
+                self.__update_threads_list(thread_info_list)
+            else:
                 break
 
-            count_pages += 1
-            print(f"Scraping page : {count_pages}")
-
-            for element in all_elements.contents:
-                try:
-                    info = self.__extract_info(element)
-                    self.__update_subreddit_list(info)
-                except TypeError as e:
-                    pass
-
-            else:
-                next_url = next(page_generator)
-                next_url += f"&after={info['id']}"
-                response = self.request(next_url)
+            next_url = self.__get_next_url(page_generator, thread_info_list[-1]['id'])
+            response = requests.get(next_url, headers={"User-Agent": browser_info})
 
             if count_pages >= page_limit:
                 break
@@ -49,59 +112,20 @@ class IdWallRedditCrawler:
         from operator import itemgetter
         return sorted(self.threads, key=itemgetter("likes"), reverse=True)
 
-    def next_page_generator(self):
+    def __get_next_url(self, page_generator, last_thread_id):
+        next_url = next(page_generator)
+        next_url += f"&after={last_thread_id}"
+        return next_url
+
+    def __next_page_generator(self):
         yield self.url
         count = 0
         while True:
             count += 25
             yield f"{self.url}?count={count}"
 
-    def request(self, url):
-        browser_data = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" + \
-                       "(KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
-        headers = {"User-Agent": browser_data}
-
-        return requests.get(url, headers=headers)
-
-    def __extract_parent_element(self, html_page):
-        soup = BeautifulSoup(html_page, 'html.parser')
-        parent_element = soup.find("div", {"id": "siteTable"})
-
-        if len(parent_element) == 1:
-            return None
-
-        return parent_element
-
-    def __extract_info(self, html_element):
-        info = dict()
-
-        info['id'] = html_element.get('data-fullname')
-        if not info['id']:
-            raise TypeError("There is no data-fullname field")
-
-        info['likes'] = self.__extract_votes(html_element)
-        info['title'], info['link'], info['comments'] = self.__extract_thread(html_element)
-
-        return info
-
-    def __extract_votes(self, html_element):
-        votes = html_element.find("div", {"class": "midcol unvoted"})
-        likes = votes.find("div", {"class": "score likes"}).get('title')
-        return int(likes)
-
-    def __extract_thread(self, html_element):
-        thread = html_element.find("div", {"class": "entry unvoted"})
-        title = thread.find("a", {"data-event-action": "title"}).text
-        link = thread.find("a", {"data-event-action": "title"}).get('href')
-        link = concatenate_link(self.base_url, link)
-        try:
-            comments = thread.find("a", {"data-event-action": "comments"}).get('href')
-        except AttributeError as e:
-            comments = "<<No comments>>"
-
-        return title, link, comments
-
-    def __update_subreddit_list(self, subreddit_info):
-        votes = subreddit_info["likes"]
-        if votes >= self.vote_threshold:
-            self.threads.append(subreddit_info)
+    def __update_threads_list(self, thread_info_list):
+        for thread_info in thread_info_list:
+            likes = thread_info["likes"]
+            if likes >= self.likes_threshold:
+                self.threads.append(thread_info)
