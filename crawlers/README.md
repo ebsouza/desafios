@@ -6,8 +6,40 @@
 
 1. Docker
 
+```
+docker build --tag=redditcrawler:idwall .
+```
+
+```
+docker create -t -i --name idwall_crawler -v <user_workspace>:/home/user redditcrawler:idwall
+```
+
+```
+docker start idwall_crawler
+```
+
+```
+docker exec -it idwall_crawler bash
+```
 
 2. Local Environment
+
+```
+python3 -m venv idwall_crawler
+```
+
+```
+source idwall_crawler/bin/active
+```
+
+```
+pip3 install --upgrade pip
+```
+
+```
+pip install -r requirements.txt
+```
+
 
 
 ### 2. How to scrap old.reddit subreddits
