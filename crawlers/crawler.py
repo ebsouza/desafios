@@ -10,9 +10,9 @@ class IdWallRedditCrawler:
 
     base_url = 'https://old.reddit.com/'
 
-    def __init__(self, subthread, vote_threshold=0):
+    def __init__(self, subreddit, vote_threshold=0):
         self.threads = list()
-        self.url = f"{self.base_url}r/{subthread}/"
+        self.url = f"{self.base_url}r/{subreddit}/"
         self.vote_threshold = vote_threshold
 
     def run(self, page_limit=1000):
@@ -33,7 +33,7 @@ class IdWallRedditCrawler:
             for element in all_elements.contents:
                 try:
                     info = self.__extract_info(element)
-                    self.__update_subthread_list(info)
+                    self.__update_subreddit_list(info)
                 except TypeError as e:
                     pass
 
@@ -101,7 +101,7 @@ class IdWallRedditCrawler:
 
         return title, link, comments
 
-    def __update_subthread_list(self, subthread_info):
-        votes = subthread_info["likes"]
+    def __update_subreddit_list(self, subreddit_info):
+        votes = subreddit_info["likes"]
         if votes >= self.vote_threshold:
-            self.threads.append(subthread_info)
+            self.threads.append(subreddit_info)
