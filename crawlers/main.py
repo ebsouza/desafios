@@ -23,7 +23,7 @@ for subreddit in args.subreddits.split(";"):
 
     print(f"[Starting scraping: '{subreddit}']")
     crawler = IdWallRedditCrawler(subreddit, args.like_threshold)
-    crawler.run(1)
+    crawler.run()
     print(f"[Finishing scraping: '{subreddit}']")
 
     print("[Results] - Sorted by likes")
