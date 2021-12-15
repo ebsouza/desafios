@@ -53,6 +53,16 @@ python main.py --subreddits 'cats;AskReddit' --like_threshold 500 --telegram
 ```
 # Docker
 docker start idwall_crawler
-docker exec -it idwall_crawler bash -c "python3 main.py --subreddits 'cats;AskReddit' --like_threshold 500" --telegram
+docker exec -it idwall_crawler bash -c "python3 main.py --subreddits 'cats;AskReddit' --like_threshold 500 --telegram"
 ```
 
+## Tests
+
+```
+# Local environment
+(idwall_crawler) python tests.py
+
+# Docker
+docker start idwall_crawler
+docker exec -it idwall_crawler bash -c "python3 tests.py"
+```
