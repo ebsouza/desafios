@@ -7,13 +7,13 @@ from formatter import StringFormatter, FileFormatter
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--text', dest='text', default=None, type=str,
-                    help='an integer for the accumulator')
+                    help='input text')
 parser.add_argument('--limit', dest='limit', default=40, type=int,
-                    help='sum the integers (default: find the max)')
+                    help='character limit')
 parser.add_argument('--justify', dest='justify', action='store_true',
-                    help='sum the integers (default: find the max)')
+                    help='justify alignment')
 parser.add_argument('--file_path', dest='file_path', default=None, type=str,
-                    help='sum the integers (default: find the max)')
+                    help='path to text file')
 args = parser.parse_args()
 
 
@@ -40,6 +40,7 @@ print("Inputs: ")
 print(f"Limit: {args.limit}")
 print(f"Should justify: {args.justify}")
 print("\n=========================\n")
+
 
 output_string = formatter.format_output(input_text)
 print(output_string)

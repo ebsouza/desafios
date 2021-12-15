@@ -5,9 +5,9 @@ import logging
 from abc import ABC, abstractmethod
 
 
-class Formatter(ABC):
+class IdWallFormatter(ABC):
 
-    def __init__(self, limit, justify, break_symbol="\n\n"):
+    def __init__(self, limit, justify=False, break_symbol="\n\n"):
         self.justify = justify
         self.limit = limit
         self.break_symbol = break_symbol
@@ -47,7 +47,7 @@ class Formatter(ABC):
         return " ".join(words)
 
 
-class StringFormatter(Formatter):
+class StringFormatter(IdWallFormatter):
 
     def next_paragraph(self, input_string):
         paragraphs = input_string.split(self.break_symbol)
@@ -67,7 +67,7 @@ class StringFormatter(Formatter):
         return output_string
 
 
-class FileFormatter(Formatter):
+class FileFormatter(IdWallFormatter):
 
     def next_paragraph(self, input_file):
         with open(input_file) as file:
